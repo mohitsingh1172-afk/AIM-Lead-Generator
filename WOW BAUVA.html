@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cute Sorry Message</title>
+  <style>
+    body {
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #ffd6e7, #ffeccf);
+      font-family: 'Poppins', sans-serif;
+      overflow: hidden;
+    }
+
+    .card {
+      background: white;
+      padding: 30px;
+      border-radius: 25px;
+      text-align: center;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+      width: 320px;
+      animation: pop 0.8s ease;
+      position: relative;
+    }
+
+    @keyframes pop {
+      0% {
+        transform: scale(0.5);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    h1 {
+      color: #ff5e8a;
+      margin-bottom: 10px;
+      font-size: 2rem;
+    }
+
+    p {
+      color: #555;
+      font-size: 1rem;
+      line-height: 1.5;
+    }
+
+    .heart {
+      font-size: 3rem;
+      animation: heartbeat 1s infinite;
+    }
+
+    @keyframes heartbeat {
+      0%, 100% {
+        transform: scale(1);
+      }
+      50% {
+        transform: scale(1.2);
+      }
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 30px;
+      background: #ff5e8a;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      background: #ff3f74;
+      transform: scale(1.05);
+    }
+
+    .hidden-message {
+      display: none;
+      margin-top: 15px;
+      color: #ff5e8a;
+      font-weight: bold;
+      animation: fadeIn 1s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="heart">💖</div>
+    <h1>I'm Sorry</h1>
+    <p>
+      I never wanted to hurt you. You mean a lot to me, and I hope this little message brings a smile to your face. 🥺
+    </p>
+
+    <button onclick="forgiveMe()">Forgive Me\? 🥺</button>
+    <button id="noBtn" onclick="moveButton()" style="background:#ffd166;color:#333;margin-left:10px;position:relative;">Still Angry 😤</button>
+
+    <div class="hidden-message" id="message">
+      YAYYY 💖 Thank you for forgiving me 🥹❤️
+    </div>
+  </div>
+
+  <script>
+    function forgiveMe() {
+      document.getElementById('message').style.display = 'block';
+    }
+
+    function moveButton() {
+      const button = document.getElementById('noBtn');
+      const x = Math.random() * 200 - 100;
+      const y = Math.random() * 100 - 50;
+
+      button.style.transform = `translate(${x}px, ${y}px)`;
+    }
+  </script>
+</body>
+</html>

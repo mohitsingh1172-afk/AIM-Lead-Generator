@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AIM Lead Generator</title>
+    <link rel="stylesheet" href="/styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <aside class="workflow">
+        <div class="brand-block">
+          <span class="brand-mark">AIM</span>
+          <strong>Lead Generator</strong>
+        </div>
+        <ol>
+          <li>
+            <span>A</span>
+            <div>
+              <strong>Acquire</strong>
+              <p>Collect businesses from Google Places.</p>
+            </div>
+          </li>
+          <li>
+            <span>I</span>
+            <div>
+              <strong>Identify</strong>
+              <p>Find public emails, phones, and profiles.</p>
+            </div>
+          </li>
+          <li>
+            <span>M</span>
+            <div>
+              <strong>Manage</strong>
+              <p>Review, email, schedule, and export.</p>
+            </div>
+          </li>
+        </ol>
+      </aside>
+
+      <section class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Local prospecting workspace</p>
+            <h1>Build a clean lead list from Google Places and public websites</h1>
+          </div>
+          <a class="download-link hidden" id="downloadLink" href="#" download>Download CSV</a>
+        </header>
+
+        <form id="searchForm" class="control-panel">
+          <section class="query-card">
+            <label>
+              <span>Search queries</span>
+              <textarea id="queries" name="queries" required rows="5" placeholder="Doctors in Delhi&#10;Doctors in South Delhi&#10;Doctors in Noida"></textarea>
+            </label>
+          </section>
+
+          <section class="settings-card">
+            <div class="setting-grid">
+              <label>
+                <span>Target leads</span>
+                <input id="limit" name="limit" type="number" min="1" max="100" value="100">
+              </label>
+              <label>
+                <span>Pages per website</span>
+                <input id="maxPages" name="maxPages" type="number" min="1" max="10" value="4">
+              </label>
+              <label>
+                <span>Delay seconds</span>
+                <input id="delay" name="delay" type="number" min="0" max="10" step="0.5" value="1">
+              </label>
+            </div>
+
+            <label>
+              <span>Google API key</span>
+              <input id="apiKey" name="apiKey" type="password" placeholder="Leave blank to use saved key">
+            </label>
+
+            <div class="action-row">
+              <div class="toggle-stack">
+                <label class="toggle-row">
+                  <input id="saveApiKey" name="saveApiKey" type="checkbox">
+                  <span>Save API key on this computer</span>
+                </label>
+                <label class="toggle-row">
+                  <input id="respectRobots" name="respectRobots" type="checkbox" checked>
+                  <span>Respect robots.txt</span>
+                </label>
+              </div>
+              <button id="searchButton" type="submit">Generate leads</button>
+            </div>
+            <div class="key-status" id="keyStatus">Checking saved key...</div>
+          </section>
+        </form>
+
+        <section class="status-strip" aria-live="polite">
+          <div>
+            <strong id="statusText">Ready</strong>
+            <span id="statusDetail">Add one or more queries. Multiple queries help reach 100 leads.</span>
+          </div>
+          <progress id="progress" value="0" max="100"></progress>
+        </section>
+
+        <section class="metrics">
+          <article>
+            <span>Businesses</span>
+            <strong id="businessCount">0</strong>
+          </article>
+          <article>
+            <span>Rows</span>
+            <strong id="rowCount">0</strong>
+          </article>
+          <article>
+            <span>Emails</span>
+            <strong id="emailCount">0</strong>
+          </article>
+          <article>
+            <span>Queries used</span>
+            <strong id="queryCount">0</strong>
+          </article>
+        </section>
+
+        <section class="save-panel hidden" id="savePanel">
+          <div>
+            <p class="panel-label">Auto saved result</p>
+            <h2>Latest CSV saved locally</h2>
+          </div>
+          <div class="save-path-row">
+            <code id="savedPath">No file saved yet.</code>
+            <button id="copySavedPathButton" type="button" class="secondary-button">Copy path</button>
+          </div>
+        </section>
+
+        <section class="outreach-panel">
+          <div>
+            <p class="panel-label">Outreach reminder</p>
+            <h2>Schedule your next follow-up step</h2>
+          </div>
+          <div class="reminder-grid">
+            <label>
+              <span>Reminder title</span>
+              <input id="reminderTitle" value="Follow up with generated leads">
+            </label>
+            <label>
+              <span>Date and time</span>
+              <input id="reminderDate" type="datetime-local">
+            </label>
+            <label>
+              <span>Notes</span>
+              <input id="reminderNotes" value="Review CSV, contact warm leads, and update status.">
+            </label>
+            <button id="reminderButton" type="button">Create calendar reminder</button>
+          </div>
+        </section>
+
+        <section class="draft-panel hidden" id="draftPanel" aria-live="polite">
+          <div class="draft-header">
+            <div>
+              <p class="panel-label">Email draft</p>
+              <h2 id="draftBusiness">Select a lead to draft an email</h2>
+            </div>
+            <button id="closeDraftButton" type="button" class="secondary-button">Close</button>
+          </div>
+          <div class="draft-grid">
+            <label>
+              <span>To</span>
+              <input id="draftTo" readonly>
+            </label>
+            <label>
+              <span>Subject</span>
+              <input id="draftSubject">
+            </label>
+          </div>
+          <label>
+            <span>Message</span>
+            <textarea id="draftBody" rows="7"></textarea>
+          </label>
+          <div class="draft-actions">
+            <button id="copyDraftButton" type="button">Copy draft</button>
+            <a id="openMailAppLink" class="secondary-link" href="#">Open email app</a>
+            <a id="openGmailLink" class="secondary-link" href="#" target="_blank" rel="noreferrer">Open Gmail</a>
+          </div>
+        </section>
+
+        <section class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Business</th>
+                <th>Email</th>
+                <th>Outreach</th>
+                <th>Phone</th>
+                <th>Website</th>
+                <th>Rating</th>
+                <th>Address</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody">
+              <tr>
+                <td colspan="7" class="empty">Your generated lead list will appear here.</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

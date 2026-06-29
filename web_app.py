@@ -25,7 +25,7 @@ ROOT_DIR = Path(__file__).resolve().parent
 STATIC_DIR = ROOT_DIR / "web"
 OUTPUT_DIR = ROOT_DIR / "exports"
 SETTINGS_PATH = ROOT_DIR / "app_settings.json"
-HOST = "127.0.0.1"
+HOST = "0.0.0.0"
 PORT = int(os.getenv("PORT", os.getenv("LEAD_APP_PORT", "8765")))
 
 JOBS: dict[str, dict] = {}

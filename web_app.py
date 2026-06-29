@@ -26,7 +26,7 @@ STATIC_DIR = ROOT_DIR / "web"
 OUTPUT_DIR = ROOT_DIR / "exports"
 SETTINGS_PATH = ROOT_DIR / "app_settings.json"
 HOST = "127.0.0.1"
-PORT = int(os.getenv("LEAD_APP_PORT", "8765"))
+PORT = int(os.getenv("PORT", os.getenv("LEAD_APP_PORT", "8765")))
 
 JOBS: dict[str, dict] = {}
 JOBS_LOCK = threading.Lock()
@@ -237,11 +237,19 @@ class LeadAppHandler(SimpleHTTPRequestHandler):
         thread.start()
         self.send_json({"jobId": job_id}, HTTPStatus.ACCEPTED)
 
+    def do_OPTIONS(self) -> None:
+        self.send_response(HTTPStatus.NO_CONTENT)
+        self.send_header("Access-Control-Allow-Origin", "*")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.end_headers()
+
     def send_json(self, payload: dict, status: HTTPStatus = HTTPStatus.OK) -> None:
         body = json.dumps(payload).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(body)))
+        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(body)
 

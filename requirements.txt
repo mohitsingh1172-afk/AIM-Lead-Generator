@@ -1,0 +1,2 @@
+# No external dependencies required for the AIM Lead Generator core.
+# Serves as placeholder for cloud deployment environments.

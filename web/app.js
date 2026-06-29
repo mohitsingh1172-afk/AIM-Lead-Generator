@@ -1,3 +1,7 @@
+// Set this to your deployed Render URL (e.g. "https://aim-lead-generator.onrender.com")
+// Leave empty ("") when running locally.
+const BACKEND_URL = "";
+
 const form = document.querySelector("#searchForm");
 const button = document.querySelector("#searchButton");
 const statusText = document.querySelector("#statusText");
@@ -33,7 +37,7 @@ let currentRows = [];
 
 async function loadSettings() {
   try {
-    const response = await fetch("/api/settings");
+    const response = await fetch(`${BACKEND_URL}/api/settings`);
     const settings = await response.json();
     if (!response.ok) {
       throw new Error(settings.error || "Could not read saved settings.");
@@ -191,7 +195,7 @@ function renderRows(rows) {
 }
 
 async function pollJob(jobId) {
-  const response = await fetch(`/api/jobs/${jobId}`);
+  const response = await fetch(`${BACKEND_URL}/api/jobs/${jobId}`);
   const job = await response.json();
   if (!response.ok) {
     throw new Error(job.error || "Could not read job status.");
@@ -254,7 +258,7 @@ form.addEventListener("submit", async (event) => {
   };
 
   try {
-    const response = await fetch("/api/search", {
+    const response = await fetch(`${BACKEND_URL}/api/search`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),

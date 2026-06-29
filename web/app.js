@@ -1,6 +1,6 @@
 // Set this to your deployed Render URL (e.g. "https://aim-lead-generator.onrender.com")
 // Leave empty ("") when running locally.
-const BACKEND_URL = "";
+const BACKEND_URL = "https://aim-lead-generator.onrender.com";
 
 const form = document.querySelector("#searchForm");
 const button = document.querySelector("#searchButton");

@@ -1,0 +1,6 @@
+# One buyer-intent keyword per line.
+product distributor
+product importer
+wholesale supplier
+private label buyer
+

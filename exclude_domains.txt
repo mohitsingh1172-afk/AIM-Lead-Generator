@@ -1,0 +1,10 @@
+# One root domain per line. Do not include protocols or paths.
+amazon.com
+facebook.com
+instagram.com
+linkedin.com
+reddit.com
+wikipedia.org
+yelp.com
+yellowpages.com
+

@@ -1,0 +1,4 @@
+# One country, state, region, or city per line.
+United States
+United Kingdom
+

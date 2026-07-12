@@ -1,5 +1,23 @@
-app_settings.json
-exports/
+# Secrets
+.env
+*.token
+*secret*
+
+# Generated lead data
+outputs/*
+!outputs/.gitkeep
+runs/*
+!runs/.gitkeep
+*.log
+
+# Python
 __pycache__/
-*.pyc
-*.csv
+*.py[cod]
+.venv/
+venv/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

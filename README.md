@@ -1,146 +1,282 @@
-# Email Lead Generator
+# Standard Lead Generator
 
-A small, compliant lead generation tool for finding businesses with Google Places data and enriching each result with public contact details from the business website.
+A resumable lead-generation pipeline for discovering business websites through
+Google via Scrape.do, enriching public contact details, cleaning results, and
+maintaining reusable exclusion lists.
 
-This project intentionally does **not** scrape Google Maps pages. Google Places data is fetched through the official Places API, and email discovery only checks public pages on each business' own website.
+## Pipeline
 
-## What It Collects
+1. **Discovery**
+   - Combines every keyword with every location.
+   - Searches Google through Scrape.do.
+   - Excludes known, noisy, or previously discovered domains.
+   - Saves after every query and resumes safely after interruption.
 
-- Business name
-- Address
-- Phone number
-- Website
-- Google Maps URL
-- Rating and review count
-- Public email addresses found on the business website
-- `email_ids`, a semicolon-separated list of all email IDs found for the business
-- Source page where each email was found
-- Extra phone numbers found on the business website
-- Public social/profile links found on the business website
+2. **Preparation**
+   - Normalizes discovery output for enrichment.
 
-## Setup
+3. **Contact enrichment**
+   - Visits company websites directly.
+   - Checks selected contact/about/supplier pages.
+   - Extracts public emails, phones, WhatsApp, Facebook, Instagram, and
+     LinkedIn.
+   - Saves after every website.
 
-1. Create a Google Maps Platform API key with Places API enabled.
-2. Set the key in your terminal:
+4. **Cleaning**
+   - Keeps records with email, phone, or WhatsApp.
+   - Separates failed, contactless, directory, and article/resource rows.
 
-```powershell
-$env:GOOGLE_MAPS_API_KEY="your_api_key_here"
+5. **Failed-row retry**
+   - Uses Scrape.do only for failed or currently missing domains.
+   - Processes each missing domain once, even if it appeared in many locations.
+
+6. **Optional review-file recovery**
+   - Adds unique rejected rows that contain email addresses.
+   - Labels them `Review Required`.
+   - Preserves the original rejection reason.
+
+## Repository Structure
+
+```text
+standard-lead-generator/
+|-- config/
+|   |-- keywords.txt
+|   |-- locations.txt
+|   `-- exclude_domains.txt
+|-- outputs/
+|   `-- .gitkeep
+|-- scripts/
+|   |-- discover.py
+|   |-- prepare.py
+|   |-- enrich.py
+|   |-- clean.py
+|   |-- combine_rejected_emails.py
+|   `-- update_exclusions.py
+|-- .env.example
+|-- .gitignore
+|-- requirements.txt
+|-- run_pipeline.ps1
+|-- retry_failed.ps1
+|-- combine_rejected_emails.ps1
+`-- update_exclusions.ps1
 ```
 
-3. Run a search:
+## Requirements
+
+- Windows PowerShell
+- Python 3.10+
+- A Scrape.do API token
+- Git, only when publishing to GitHub
+
+Install Python dependencies:
 
 ```powershell
-python lead_generator.py "dentists in Austin TX" --limit 25 --output leads.csv
+cd "C:\path\to\standard-lead-generator"
+python -m pip install -r requirements.txt
 ```
 
-## Browser App
+## Configure a Lead Project
 
-You can also run the lead generator from a local browser screen:
+Edit these three files:
+
+### `config/keywords.txt`
+
+Use one buyer-intent phrase per line:
+
+```text
+dog chew importer
+pet supplement distributor
+private label pet products
+```
+
+### `config/locations.txt`
+
+Use one country, state, region, or city per line:
+
+```text
+United States
+California
+United Kingdom
+London, United Kingdom
+```
+
+### `config/exclude_domains.txt`
+
+Use one root domain per line:
+
+```text
+amazon.com
+facebook.com
+yelp.com
+```
+
+Comments beginning with `#` and blank lines are ignored.
+
+## Run the Pipeline
+
+Set the token only in the current PowerShell session:
 
 ```powershell
-cd "C:\Users\User\OneDrive\Documents\New project"
-$env:GOOGLE_MAPS_API_KEY="your_api_key_here"
-.\run_web_app.bat
+$env:SCRAPEDO_TOKEN="your_real_token"
 ```
 
-Then open:
+Run:
+
+```powershell
+.\run_pipeline.ps1 `
+  -ProjectName "dog_chew_buyers" `
+  -MaxResultsPerQuery 20 `
+  -PhoneCountryCode "+1"
+```
+
+## Run the Browser App
+
+The browser app lets users enter locations, keywords, result depth, and excluded
+domains from a web page. It runs the same discovery, enrichment, and cleaning
+pipeline, shows cleaned results page by page, and can download the cleaned file
+as CSV or Excel.
+
+Start it:
+
+```powershell
+cd "C:\path\to\standard-lead-generator"
+$env:SCRAPEDO_TOKEN="your_real_token"
+python web_app.py
+```
+
+Open:
 
 ```text
 http://127.0.0.1:8765
 ```
 
-### Save Your API Key
-
-The browser app can save your Google Maps API key locally in this project. Paste the key in the app, select **Save API key on this computer**, then run a search once.
-
-After that, you can leave the API key box blank. The saved key is stored in:
+The token can be set in PowerShell, or typed into the web form for a single
+run. Job data is saved under:
 
 ```text
-C:\Users\User\OneDrive\Documents\New project\app_settings.json
+runs/
 ```
 
-Do not share this file publicly.
+The web app is intentionally built with Python's standard library so a frontend
+developer can replace the UI without changing the pipeline behavior.
 
-### Keep The App Running
+Use `10` results per query for a low-credit pilot. Increase to `20`, `30`, or
+`50` only after checking quality and remaining credits.
 
-To run the website in the background without a visible terminal window, double-click:
+Generated files:
 
 ```text
-run_web_app_hidden.vbs
+outputs/dog_chew_buyers_discovered.csv
+outputs/dog_chew_buyers_for_enrichment.csv
+outputs/dog_chew_buyers_enriched.csv
+outputs/dog_chew_buyers_cleaned.csv
+outputs/dog_chew_buyers_rejected.csv
 ```
 
-Then open:
+## Resume an Interrupted Run
 
-```text
-http://127.0.0.1:8765
-```
+Run the same command again. Discovery skips completed keyword/location pairs,
+and enrichment skips domains already saved.
 
-Closing the browser tab will not stop the app. It keeps running in the background.
+## Retry Failed Enrichment
 
-To stop it, double-click:
-
-```text
-stop_web_app.bat
-```
-
-### Start Automatically With Windows
-
-To make the app start when Windows starts, double-click:
-
-```text
-install_startup.bat
-```
-
-After that, the website should be available at `http://127.0.0.1:8765` after you log in to Windows.
-
-Every browser search automatically saves a CSV inside:
-
-```text
-C:\Users\User\OneDrive\Documents\New project\exports
-```
-
-The app also shows the latest saved CSV path after each completed run.
-
-The browser app uses the AIM workflow:
-
-- Acquire: send your query to Google Places API and collect matching businesses.
-- Identify: visit each business website and find public emails, phone numbers, and social links.
-- Manage: show the lead table and save a CSV file in the `exports` folder.
-- Outreach: use per-lead email draft buttons, copy drafts, open Gmail, and create a calendar reminder file for follow-up.
-
-To target 100 leads, add multiple search lines in the browser app:
-
-```text
-Doctors in Delhi
-Doctors in South Delhi
-Doctors in Noida
-Doctors in Gurugram
-Doctors in Ghaziabad
-```
-
-Google Places may return up to about 60 results from one Text Search query, so the app combines multiple queries and removes duplicate businesses until it reaches the target lead count or runs out of results.
-
-## Examples
+Run after the main pipeline finishes:
 
 ```powershell
-python lead_generator.py "restaurants in Chicago" --limit 40
-python lead_generator.py "roofing companies near Phoenix AZ" --limit 20 --max-pages 5
-python lead_generator.py "accountants in Miami FL" --no-robots-check
+.\retry_failed.ps1 `
+  -ProjectName "dog_chew_buyers" `
+  -PhoneCountryCode "+1"
 ```
 
-The CSV includes one row per business email found. Businesses without a discovered email are still included once, with the email columns left blank.
+Retry progress is displayed separately from original input position:
 
-## Notes
+```text
+[RETRY 12/240 | input 518/4300] Enriching example.com
+```
 
-- The Places API Text Search endpoint can return up to 60 results across pages.
-- The browser app can target 100 leads by combining multiple queries, but Google API quotas and billing are controlled by Google. This project cannot guarantee that API usage will always be free.
-- Google Places fields can affect billing. This tool requests only a focused set of business/contact fields.
-- Some businesses do not publish emails. The output will still include the business row with an empty email field.
-- Always follow applicable privacy, anti-spam, and marketing laws before contacting leads.
-- The app creates individual email drafts inside the browser. You can copy the draft, open Gmail, or try your default email app. It does not send bulk email automatically.
-- Calendar reminders are downloaded as `.ics` files. Open the file to add it to Outlook, Google Calendar, Apple Calendar, or another calendar app.
+## Include Rejected Rows That Have Email Addresses
 
-## Useful Official Docs
+This does not overwrite the strict cleaned file:
 
-- [Places API Text Search](https://developers.google.com/maps/documentation/places/web-service/text-search)
-- [Places API Place resource fields](https://developers.google.com/maps/documentation/places/web-service/reference/rest/v1/places)
+```powershell
+.\combine_rejected_emails.ps1 -ProjectName "dog_chew_buyers"
+```
+
+Output:
+
+```text
+outputs/dog_chew_buyers_cleaned_with_rejected_emails.csv
+```
+
+Added records are labelled:
+
+```text
+Rejected Lead With Email - Review Required
+```
+
+## Add Previously Found Domains to Exclusions
+
+To prevent rediscovery in a new campaign:
+
+```powershell
+.\update_exclusions.ps1 -CsvFiles @(
+  "C:\path\to\old_project_cleaned.csv",
+  "C:\path\to\another_discovered.csv"
+)
+```
+
+This updates `config/exclude_domains.txt`.
+
+## Lead Definitions
+
+- **Cleaned lead:** has at least one public email, phone, or WhatsApp contact.
+- **Email-ready lead:** has a non-empty `Emails` field.
+- **Phone-only lead:** has a phone but no email.
+- **Review-required lead:** rejected by quality rules but retained because an
+  email was found.
+
+Do not treat every cleaned row as email-ready.
+
+## Credit Management
+
+- Start with national or top-market locations.
+- Start with 10 results per query.
+- Avoid running several discovery jobs simultaneously.
+- Website enrichment is direct by default and does not use Scrape.do.
+- Failed-row retry uses Scrape.do and should be run only after reviewing
+  failure counts.
+
+## Security
+
+- Never store a real API token in a file committed to Git.
+- `.env` and generated output files are ignored.
+- Set `SCRAPEDO_TOKEN` in PowerShell for each session.
+- If a token was ever committed, rotate it before publishing the repository.
+
+## Publish to GitHub
+
+First install [Git for Windows](https://git-scm.com/download/win), then restart
+PowerShell.
+
+Create an empty repository on GitHub without a README or `.gitignore`. Then:
+
+```powershell
+cd "C:\path\to\standard-lead-generator"
+
+git init
+git add .
+git status
+git commit -m "Create standard lead generation pipeline"
+git branch -M main
+git remote add origin https://github.com/YOUR_USERNAME/standard-lead-generator.git
+git push -u origin main
+```
+
+Before `git commit`, inspect `git status` and confirm that no CSV outputs,
+tokens, or secret files are staged.
+
+## Disclaimer
+
+Use public business contact information responsibly. Follow applicable privacy,
+anti-spam, website terms, import/export, and marketing regulations in each
+target jurisdiction.

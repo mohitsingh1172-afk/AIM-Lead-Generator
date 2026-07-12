@@ -773,7 +773,6 @@ def json_response(handler, data, status=HTTPStatus.OK):
     handler.send_response(status)
     handler.send_header("Content-Type", "application/json; charset=utf-8")
     handler.send_header("Content-Length", str(len(payload)))
-    handler.send_header("Access-Control-Allow-Origin", "*")
     handler.end_headers()
     handler.wfile.write(payload)
 
@@ -783,7 +782,6 @@ def text_response(handler, data, content_type="text/plain; charset=utf-8"):
     handler.send_response(HTTPStatus.OK)
     handler.send_header("Content-Type", content_type)
     handler.send_header("Content-Length", str(len(payload)))
-    handler.send_header("Access-Control-Allow-Origin", "*")
     handler.end_headers()
     handler.wfile.write(payload)
 
@@ -1063,13 +1061,6 @@ def build_xlsx(columns, rows, target):
 
 
 class AppHandler(BaseHTTPRequestHandler):
-    def do_OPTIONS(self):
-        self.send_response(HTTPStatus.NO_CONTENT)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.end_headers()
-
     def do_GET(self):
         parsed = urlparse(self.path)
         path = parsed.path
@@ -1210,7 +1201,6 @@ class AppHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
         self.send_header("Content-Length", str(len(data)))
-        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(data)
 
@@ -1219,9 +1209,9 @@ class AppHandler(BaseHTTPRequestHandler):
 
 
 def main():
-    port = int(os.getenv("PORT", os.getenv("LEAD_APP_PORT", "8765")))
-    server = ThreadingHTTPServer(("0.0.0.0", port), AppHandler)
-    print(f"Lead Generator running at http://0.0.0.0:{port}")
+    port = int(os.getenv("LEAD_APP_PORT", "8765"))
+    server = ThreadingHTTPServer(("127.0.0.1", port), AppHandler)
+    print(f"Lead Generator running at http://127.0.0.1:{port}")
     server.serve_forever()
 
 

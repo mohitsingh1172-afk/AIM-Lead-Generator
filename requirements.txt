@@ -1,2 +1,4 @@
-# No external dependencies required for the AIM Lead Generator core.
-# Serves as placeholder for cloud deployment environments.
+beautifulsoup4>=4.12,<5
+pandas>=2.2,<3
+requests>=2.32,<3
+

@@ -848,8 +848,11 @@ def pipeline_thread(job_id, retry=False):
             append_log(job, "Starting failed/missing retry")
             run_command(job, [sys.executable, str(SCRIPTS / "enrich.py")], env)
         else:
-            if not env.get("SCRAPEDO_TOKEN"):
+            token = env.get("SCRAPEDO_TOKEN", "")
+            if not token:
                 raise RuntimeError("SCRAPEDO_TOKEN is required for discovery.")
+            masked_token = f"{token[:4]}...{token[-4:]}" if len(token) > 8 else "too_short"
+            append_log(job, f"Diagnostics - SCRAPEDO_TOKEN length: {len(token)}, Masked: {masked_token}")
             append_log(job, "Starting discovery")
             run_command(job, [sys.executable, str(SCRIPTS / "discover.py")], env)
             append_log(job, "Preparing enrichment input")

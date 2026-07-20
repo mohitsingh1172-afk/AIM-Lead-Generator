@@ -100,8 +100,7 @@ def fetch_google_html(search_url: str) -> str:
         raise RuntimeError("SCRAPEDO_TOKEN is still set to the placeholder value.")
 
     encoded_url = urllib.parse.quote(search_url, safe="")
-    scrape_url = f"https://api.scrape.do/?token={SCRAPEDO_TOKEN}&url={encoded_url}"
-
+    scrape_url = f"https://api.scrape.do/?token={SCRAPEDO_TOKEN}&url={encoded_url}&super=true"
     response = requests.get(scrape_url, headers={"User-Agent": "Mozilla/5.0"}, timeout=30)
     if response.status_code == 401:
         raise DiscoveryQuotaError("Scrape.do returned 401 Unauthorized. Token or quota is exhausted.")

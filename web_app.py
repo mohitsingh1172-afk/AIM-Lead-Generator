@@ -14,17 +14,12 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
-
-
 ROOT = Path(__file__).resolve().parent
-SCRIPTS = ROOT / "scripts" if (ROOT / "scripts").exists() else ROOT
+SCRIPTS = ROOT / "scripts"
 RUNS = ROOT / "runs"
 RUNS.mkdir(exist_ok=True)
-
 JOBS = {}
 JOBS_LOCK = threading.Lock()
-
-
 INDEX_HTML = r"""<!doctype html>
 <html lang="en">
 <head>
@@ -443,7 +438,6 @@ INDEX_HTML = r"""<!doctype html>
     <form id="leadForm">
       <label>Project name</label>
       <input name="projectName" value="lead_project" required />
-
       <div class="row">
         <div>
           <label>Results per query</label>
@@ -455,21 +449,17 @@ INDEX_HTML = r"""<!doctype html>
           <div class="hint" id="phoneCodeHint">Auto detects from each lead location.</div>
         </div>
       </div>
-
       <label>Scrape.do token</label>
       <input name="scrapedoToken" type="password" placeholder="Optional if set on server" />
       <div class="hint">The token is used for Google discovery and is not saved to config files.</div>
-
       <label>Locations</label>
       <textarea name="locations" required>United States
 United Kingdom</textarea>
-
       <label>Keywords</label>
       <textarea name="keywords" required>product distributor
 product importer
 wholesale buyer
 private label buyer</textarea>
-
       <label>Exclude domains</label>
       <textarea name="exclusions">amazon.com
 facebook.com
@@ -477,7 +467,6 @@ instagram.com
 linkedin.com
 reddit.com
 yelp.com</textarea>
-
       <div class="toolbar">
         <button type="submit" id="runBtn">Run Pipeline</button>
         <button type="button" id="retryBtn" class="secondary" disabled>Retry Failed</button>
@@ -486,7 +475,6 @@ yelp.com</textarea>
       <div class="hint">Run creates a private job folder under <code>runs/</code>. Large searches can take time.</div>
     </form>
   </aside>
-
   <section>
     <div class="results-shell">
       <div class="results-top">
@@ -500,43 +488,36 @@ yelp.com</textarea>
           <a id="downloadCsv" class="button secondary" href="#" style="display:none">Download CSV</a>
         </div>
       </div>
-
       <div class="cards">
         <div class="card"><strong id="rowsCount">0</strong><span>Rows</span></div>
         <div class="card"><strong id="emailCount">0</strong><span>With Email</span></div>
         <div class="card"><strong id="phoneCount">0</strong><span>With Phone</span></div>
         <div class="card"><strong id="bothCount">0</strong><span>Email + Phone</span></div>
       </div>
-
       <div class="toolbar inline-toolbar">
         <button id="prevPage" class="secondary" disabled>Previous</button>
         <span id="pageInfo" class="hint">Page 0 of 0</span>
         <button id="nextPage" class="secondary" disabled>Next</button>
       </div>
-
       <div class="table-wrap">
         <table id="resultsTable">
           <thead></thead>
           <tbody></tbody>
         </table>
       </div>
-
       <label class="log-label">Job log</label>
       <pre id="logBox"></pre>
     </div>
   </section>
 </main>
-
 <script>
 let currentJob = null;
 let currentPage = 1;
 const pageSize = 25;
 let pollTimer = null;
-
 function lines(value) {
   return value.split(/\r?\n/).map(x => x.trim()).filter(Boolean);
 }
-
 const phoneCodeMap = [
   ['afghanistan', '+93'], ['albania', '+355'], ['algeria', '+213'], ['andorra', '+376'],
   ['angola', '+244'], ['anguilla', '+1'], ['antigua and barbuda', '+1'], ['argentina', '+54'],
@@ -594,7 +575,6 @@ const phoneCodeMap = [
   ['venezuela', '+58'], ['vietnam', '+84'], ['viet nam', '+84'], ['yemen', '+967'],
   ['zambia', '+260'], ['zimbabwe', '+263']
 ];
-
 function detectPhoneCodesFromLocations() {
   const form = document.getElementById('leadForm');
   const locationText = (form.elements.locations.value || '').toLowerCase().replace(/[^a-z0-9\s.]+/g, ' ');
@@ -610,18 +590,15 @@ function detectPhoneCodesFromLocations() {
   });
   return Array.from(found);
 }
-
 function updatePhoneCodeHint() {
   const input = document.querySelector('[name="phoneCountryCode"]');
   const hint = document.getElementById('phoneCodeHint');
   if (!input || !hint) return;
-
   const value = input.value.trim().toLowerCase();
   if (value && !['auto', 'automatic'].includes(value)) {
     hint.textContent = `Manual override: all rows will use ${input.value.trim()}.`;
     return;
   }
-
   const codes = detectPhoneCodesFromLocations();
   if (codes.length) {
     hint.textContent = `Auto mode: rows will use detected phone codes ${codes.join(', ')} based on their location.`;
@@ -629,34 +606,29 @@ function updatePhoneCodeHint() {
     hint.textContent = 'Auto mode: no country detected yet, so unmatched rows will use +1.';
   }
 }
-
 function showFormMessage(message, type = 'info') {
   const box = document.getElementById('formMessage');
   if (!box) return;
   box.className = `message show ${type}`;
   box.textContent = message;
 }
-
 function clearFormMessage() {
   const box = document.getElementById('formMessage');
   if (!box) return;
   box.className = 'message';
   box.textContent = '';
 }
-
 async function api(path, options = {}) {
   const res = await fetch(path, options);
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || res.statusText);
   return data;
 }
-
 function setStatus(job) {
   const el = document.getElementById('status');
   el.className = 'status ' + (job ? job.status : '');
   el.textContent = job ? `${job.status.toUpperCase()} - ${job.project_name}` : 'No job';
 }
-
 async function refreshJob() {
   if (!currentJob) return;
   const data = await api(`/api/jobs/${currentJob}`);
@@ -670,7 +642,6 @@ async function refreshJob() {
     pollTimer = null;
   }
 }
-
 async function loadResults(page) {
   if (!currentJob) return;
   const data = await api(`/api/jobs/${currentJob}/results?page=${page}&page_size=${pageSize}`);
@@ -682,7 +653,6 @@ async function loadResults(page) {
   document.getElementById('pageInfo').textContent = `Page ${data.page} of ${data.total_pages}`;
   document.getElementById('prevPage').disabled = data.page <= 1;
   document.getElementById('nextPage').disabled = data.page >= data.total_pages;
-
   const thead = document.querySelector('#resultsTable thead');
   const tbody = document.querySelector('#resultsTable tbody');
   thead.innerHTML = '';
@@ -704,13 +674,11 @@ async function loadResults(page) {
     });
     tbody.appendChild(tr);
   });
-
   document.getElementById('downloadXlsx').style.display = data.total_rows ? 'inline-flex' : 'none';
   document.getElementById('downloadCsv').style.display = data.total_rows ? 'inline-flex' : 'none';
   document.getElementById('downloadXlsx').href = `/api/jobs/${currentJob}/download.xlsx`;
   document.getElementById('downloadCsv').href = `/api/jobs/${currentJob}/download.csv`;
 }
-
 document.getElementById('leadForm').addEventListener('submit', async (event) => {
   event.preventDefault();
   const form = new FormData(event.target);
@@ -743,7 +711,6 @@ document.getElementById('leadForm').addEventListener('submit', async (event) => 
     document.getElementById('runBtn').disabled = false;
   }
 });
-
 document.getElementById('retryBtn').addEventListener('click', async () => {
   if (!currentJob) return;
   clearFormMessage();
@@ -757,7 +724,6 @@ document.getElementById('retryBtn').addEventListener('click', async () => {
     showFormMessage(err.message, 'error');
   }
 });
-
 document.getElementById('prevPage').addEventListener('click', () => loadResults(currentPage - 1));
 document.getElementById('nextPage').addEventListener('click', () => loadResults(currentPage + 1));
 document.querySelector('[name="locations"]').addEventListener('input', updatePhoneCodeHint);
@@ -766,33 +732,23 @@ updatePhoneCodeHint();
 </script>
 </body>
 </html>"""
-
-
 def json_response(handler, data, status=HTTPStatus.OK):
     payload = json.dumps(data, ensure_ascii=False).encode("utf-8")
     handler.send_response(status)
     handler.send_header("Content-Type", "application/json; charset=utf-8")
     handler.send_header("Content-Length", str(len(payload)))
-    handler.send_header("Access-Control-Allow-Origin", "*")
     handler.end_headers()
     handler.wfile.write(payload)
-
-
 def text_response(handler, data, content_type="text/plain; charset=utf-8"):
     payload = data.encode("utf-8")
     handler.send_response(HTTPStatus.OK)
     handler.send_header("Content-Type", content_type)
     handler.send_header("Content-Length", str(len(payload)))
-    handler.send_header("Access-Control-Allow-Origin", "*")
     handler.end_headers()
     handler.wfile.write(payload)
-
-
 def safe_project_name(value):
     value = re.sub(r"[^A-Za-z0-9_.-]+", "_", value.strip())
     return value.strip("._-") or "lead_project"
-
-
 def has_scrapedo_token(payload=None, job=None):
     payload = payload or {}
     job = job or {}
@@ -801,8 +757,6 @@ def has_scrapedo_token(payload=None, job=None):
         or str(job.get("scrapedo_token") or "").strip()
         or os.environ.get("SCRAPEDO_TOKEN", "").strip()
     )
-
-
 def write_lines(path, lines):
     cleaned = []
     for line in lines:
@@ -810,8 +764,6 @@ def write_lines(path, lines):
         if line and line not in cleaned:
             cleaned.append(line)
     path.write_text("\n".join(cleaned) + "\n", encoding="utf-8")
-
-
 def append_log(job, message):
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     line = f"[{timestamp}] {message.rstrip()}\n"
@@ -820,14 +772,10 @@ def append_log(job, message):
         job["log"] = job["log"][-400:]
     with open(job["log_file"], "a", encoding="utf-8") as handle:
         handle.write(line)
-
-
 def set_job_status(job, status):
     with JOBS_LOCK:
         job["status"] = status
         job["updated_at"] = datetime.now().isoformat(timespec="seconds")
-
-
 def run_command(job, args, env):
     append_log(job, f"$ {' '.join(str(x) for x in args)}")
     process = subprocess.Popen(
@@ -848,18 +796,15 @@ def run_command(job, args, env):
     code = process.wait()
     if code:
         raise RuntimeError(f"Command failed with exit code {code}: {' '.join(args)}")
-
-
 def build_env(job, retry=False):
     env = os.environ.copy()
     token = job.get("scrapedo_token") or env.get("SCRAPEDO_TOKEN", "")
     if token:
-        env["SCRAPEDO_TOKEN"] = token
+        env["SCRAPEDO_TOKEN"] = str(token).strip().strip("'\"")
     project = job["project_name"]
     run_dir = Path(job["run_dir"])
     output_dir = run_dir / "outputs"
     config_dir = run_dir / "config"
-
     env["PROJECT_NAME"] = project
     env["PHONE_COUNTRY_CODE"] = job.get("phone_country_code", "Auto")
     env["ENRICH_INPUT_FILE"] = str(output_dir / f"{project}_for_enrichment.csv")
@@ -867,7 +812,6 @@ def build_env(job, retry=False):
     env["CLEAN_INPUT_FILE"] = str(output_dir / f"{project}_enriched.csv")
     env["CLEAN_OUTPUT_FILE"] = str(output_dir / f"{project}_cleaned.csv")
     env["REJECTED_OUTPUT_FILE"] = str(output_dir / f"{project}_rejected.csv")
-
     if retry:
         env["USE_SCRAPEDO"] = "1"
         env["SCRAPEDO_FIRST"] = "1"
@@ -892,8 +836,6 @@ def build_env(job, retry=False):
         env["REQUEST_DELAY_SECONDS"] = "2"
         env["GENERIC_DISCOVERY_FILE"] = str(output_dir / f"{project}_discovered.csv")
     return env
-
-
 def pipeline_thread(job_id, retry=False):
     with JOBS_LOCK:
         job = JOBS[job_id]
@@ -926,7 +868,6 @@ def pipeline_thread(job_id, retry=False):
             env["RETRY_FAILED"] = "0"
             env["RETRY_MISSING"] = "0"
             run_command(job, [sys.executable, str(SCRIPTS / "enrich.py")], env)
-
         append_log(job, "Cleaning leads")
         run_command(job, [sys.executable, str(SCRIPTS / "clean.py")], env)
         append_log(job, "Done")
@@ -934,8 +875,6 @@ def pipeline_thread(job_id, retry=False):
     except Exception as exc:
         append_log(job, f"ERROR: {exc}")
         set_job_status(job, "failed")
-
-
 def create_job(payload):
     project = safe_project_name(payload.get("projectName", "lead_project"))
     job_id = f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
@@ -947,7 +886,6 @@ def create_job(payload):
     write_lines(config_dir / "locations.txt", payload.get("locations", []))
     write_lines(config_dir / "keywords.txt", payload.get("keywords", []))
     write_lines(config_dir / "exclude_domains.txt", payload.get("exclusions", []))
-
     job = {
         "id": job_id,
         "project_name": project,
@@ -967,8 +905,6 @@ def create_job(payload):
     thread = threading.Thread(target=pipeline_thread, args=(job_id,), daemon=True)
     thread.start()
     return job_id
-
-
 def public_job(job):
     return {
         "id": job["id"],
@@ -980,16 +916,10 @@ def public_job(job):
         "process_id": job["process_id"],
         "log_tail": "".join(job["log"][-120:]),
     }
-
-
 def cleaned_path(job):
     return Path(job["run_dir"]) / "outputs" / f"{job['project_name']}_cleaned.csv"
-
-
 def rejected_path(job):
     return Path(job["run_dir"]) / "outputs" / f"{job['project_name']}_rejected.csv"
-
-
 def read_cleaned_rows(job):
     path = cleaned_path(job)
     if not path.exists():
@@ -998,16 +928,12 @@ def read_cleaned_rows(job):
         reader = csv.DictReader(handle)
         rows = list(reader)
         return list(reader.fieldnames or []), rows
-
-
 def xlsx_col_name(index):
     name = ""
     while index:
         index, remainder = divmod(index - 1, 26)
         name = chr(65 + remainder) + name
     return name
-
-
 def sheet_xml(columns, rows):
     parts = [
         '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>',
@@ -1024,8 +950,6 @@ def sheet_xml(columns, rows):
         parts.append("</row>")
     parts.extend(["</sheetData>", "</worksheet>"])
     return "".join(parts)
-
-
 def build_xlsx(columns, rows, target):
     with zipfile.ZipFile(target, "w", compression=zipfile.ZIP_DEFLATED) as zf:
         zf.writestr(
@@ -1060,16 +984,7 @@ def build_xlsx(columns, rows, target):
 </Relationships>""",
         )
         zf.writestr("xl/worksheets/sheet1.xml", sheet_xml(columns, rows))
-
-
 class AppHandler(BaseHTTPRequestHandler):
-    def do_OPTIONS(self):
-        self.send_response(HTTPStatus.NO_CONTENT)
-        self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
-        self.end_headers()
-
     def do_GET(self):
         parsed = urlparse(self.path)
         path = parsed.path
@@ -1129,7 +1044,6 @@ class AppHandler(BaseHTTPRequestHandler):
             json_response(self, {"error": "Not found"}, HTTPStatus.NOT_FOUND)
         except Exception as exc:
             json_response(self, {"error": str(exc)}, HTTPStatus.INTERNAL_SERVER_ERROR)
-
     def do_POST(self):
         parsed = urlparse(self.path)
         try:
@@ -1177,19 +1091,16 @@ class AppHandler(BaseHTTPRequestHandler):
             json_response(self, {"error": "Not found"}, HTTPStatus.NOT_FOUND)
         except Exception as exc:
             json_response(self, {"error": str(exc)}, HTTPStatus.INTERNAL_SERVER_ERROR)
-
     def read_json(self):
         length = int(self.headers.get("Content-Length", "0") or "0")
         raw = self.rfile.read(length).decode("utf-8")
         return json.loads(raw or "{}")
-
     def get_job(self, job_id):
         with JOBS_LOCK:
             job = JOBS.get(job_id)
         if not job:
             raise ValueError("Unknown job")
         return job
-
     def download_file(self, job, kind):
         columns, rows = read_cleaned_rows(job)
         if not rows:
@@ -1210,20 +1121,14 @@ class AppHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", content_type)
         self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
         self.send_header("Content-Length", str(len(data)))
-        self.send_header("Access-Control-Allow-Origin", "*")
         self.end_headers()
         self.wfile.write(data)
-
     def log_message(self, format, *args):
         return
-
-
 def main():
-    port = int(os.getenv("PORT", os.getenv("LEAD_APP_PORT", "8765")))
-    server = ThreadingHTTPServer(("0.0.0.0", port), AppHandler)
-    print(f"Lead Generator running at http://0.0.0.0:{port}")
+    port = int(os.getenv("LEAD_APP_PORT", "8765"))
+    server = ThreadingHTTPServer(("127.0.0.1", port), AppHandler)
+    print(f"Lead Generator running at http://127.0.0.1:{port}")
     server.serve_forever()
-
-
 if __name__ == "__main__":
     main()

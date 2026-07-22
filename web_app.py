@@ -1212,11 +1212,10 @@ class AppHandler(BaseHTTPRequestHandler):
 
 
 def main():
-    port = int(os.getenv("LEAD_APP_PORT", "8765"))
-    server = ThreadingHTTPServer(("127.0.0.1", port), AppHandler)
-    print(f"Lead Generator running at http://127.0.0.1:{port}")
+    port = int(os.getenv("PORT") or os.getenv("LEAD_APP_PORT", "8765"))
+    server = ThreadingHTTPServer(("0.0.0.0", port), AppHandler)
+    print(f"Lead Generator running at http://0.0.0.0:{port}")
     server.serve_forever()
-
 
 if __name__ == "__main__":
     main()

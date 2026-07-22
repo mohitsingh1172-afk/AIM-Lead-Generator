@@ -17,7 +17,7 @@ from urllib.parse import parse_qs, urlparse
 
 
 ROOT = Path(__file__).resolve().parent
-SCRIPTS = ROOT / "scripts"
+SCRIPTS = ROOT / "scripts" if (ROOT / "scripts" / "discover.py").exists() else ROOT
 RUNS = ROOT / "runs"
 RUNS.mkdir(exist_ok=True)
 
